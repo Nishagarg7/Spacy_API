@@ -3,6 +3,7 @@ from flask import render_template,redirect, url_for, request,Flask
 #from flask_sqlalchemy import SQLAlchemy
 import nltk
 import spacy
+import classy_classification
 from spacy.tokens import SpanGroup
 #nltk.download('omw-1.4')
 app = Flask(__name__)
@@ -15,6 +16,14 @@ config = {
     "max_positive": None,
     "model": DEFAULT_SPANCAT_MODEL,
     "suggester": {"@misc": "spacy.ngram_suggester.v1", "sizes": [1, 2, 3]},
+}
+data = {
+    "furniture": ["This text is about chairs.",
+               "Couches, benches and televisions.",
+               "I really need to get a new sofa."],
+    "kitchen": ["There also exist things like fridges.",
+                "I hope to be getting a new stove today.",
+                "Do you also have some ovens."]
 }
 #nlp.add_pipe("spancat", config=config)
 text = "Backgammon is one of the oldest known board games. Its history can be traced back nearly 5,000 years to archeological discoveries in the Middle East. It is a two player game where each player has fifteen checkers which move between twenty-four points according to the roll of two dice."
@@ -130,11 +139,19 @@ def spanCategorizer(text):
     
     #nlp.add_pipe("spancat")
     doc=nlp(text)
-    print(doc.spans[spans_key])
-    #spans = doc.spans["sc"]
-    #for span, confidence in zip(spans, spans.attrs["scores"]):
-       # print(span.label_, confidence)
+    #print(doc.spans[spanCategorizer])
+    spans = doc.spans[spanCategorizer]
+    for span, confidence in zip(spans, spans.attrs["scores"]):
+        print(span.label_, confidence)
 
+
+text_cat=nlp.add_pipe("textcat", 
+    config={
+        "data": data,
+        "model": "spacy"
+    }
+)
+print(text_cat(text)._.cats)
 #lemmatizer(doc)
 #morphologizer(doc)
 #tagger(doc)
@@ -144,7 +161,8 @@ def spanCategorizer(text):
 #attribute_ruler(doc)
 #entity_linker(doc)
 #sentencizer(doc)
-spanCategorizer(text)
+#spanCategorizer(text)
+
 #to run the app in debug mode
 if __name__ == "__main__":
     app.run(debug = True)
