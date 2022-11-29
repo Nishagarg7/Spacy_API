@@ -5,27 +5,12 @@ import nltk
 import spacy
 import classy_classification
 from spacy.tokens import SpanGroup
+nlp = spacy.load("en_core_web_md")
 #nltk.download('omw-1.4')
 app = Flask(__name__)
 
-nlp = spacy.load("en_core_web_md")
-from spacy.pipeline.spancat import DEFAULT_SPANCAT_MODEL
-config = {
-    "threshold": 0.5,
-    "spans_key": "labeled_spans",
-    "max_positive": None,
-    "model": DEFAULT_SPANCAT_MODEL,
-    "suggester": {"@misc": "spacy.ngram_suggester.v1", "sizes": [1, 2, 3]},
-}
-data = {
-    "furniture": ["This text is about chairs.",
-               "Couches, benches and televisions.",
-               "I really need to get a new sofa."],
-    "kitchen": ["There also exist things like fridges.",
-                "I hope to be getting a new stove today.",
-                "Do you also have some ovens."]
-}
-#nlp.add_pipe("spancat", config=config)
+
+
 text = "Backgammon is one of the oldest known board games. Its history can be traced back nearly 5,000 years to archeological discoveries in the Middle East. It is a two player game where each player has fifteen checkers which move between twenty-four points according to the roll of two dice."
 #doc = nlp(text)
 @app.route('/attribute_ruler', methods = ['POST'])
@@ -144,14 +129,25 @@ def spanCategorizer(text):
     for span, confidence in zip(spans, spans.attrs["scores"]):
         print(span.label_, confidence)
 
+@app.route('/textCategorizer', methods = ['POST'])
+def textCategorizer():
+    data = {
+        "furniture": ["This text is about chairs.",
+               "Couches, benches and televisions.",
+               "I really need to get a new sofa."],
+        "kitchen": ["There also exist things like fridges.",
+                "I hope to be getting a new stove today.",
+                "Do you also have some ovens."]
+           }
+    nlp.add_pipe("text_categorizer", 
+        config={
+            "data": data,
+            "model": "spacy"
+               }
+                )
+    doc=nlp(text)
+    return(doc._.cats)
 
-text_cat=nlp.add_pipe("textcat", 
-    config={
-        "data": data,
-        "model": "spacy"
-    }
-)
-print(text_cat(text)._.cats)
 #lemmatizer(doc)
 #morphologizer(doc)
 #tagger(doc)
@@ -162,7 +158,7 @@ print(text_cat(text)._.cats)
 #entity_linker(doc)
 #sentencizer(doc)
 #spanCategorizer(text)
-
+#textCategorizer(text)
 #to run the app in debug mode
 if __name__ == "__main__":
     app.run(debug = True)
